@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Sprawdzenie, czy podano nazwę pliku jako argument
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 logfile.log"
+    exit 1
+fi
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$1" ]; then
+    echo "Plik $1 nie istnieje."
+    exit 1
+fi
+
+# Wyodrębnienie godzin i zliczenie liczby żądań
+awk '
+    {
+        # Wyciągnięcie godziny z pola daty (pole $4, format [17/May/2015:10:05:03)
+        match($4, /[0-9]{2}:/, hour)
+        hour_count[substr(hour[0], 1, 2)]++
+    }
+    END {
+        # Wyświetlenie wyników w kolejności od 00 do 23
+        for (i = 0; i < 24; i++) {
+            hour = sprintf("%02d", i)
+            print hour, (hour_count[hour] ? hour_count[hour] : 0)
+        }
+    }
+' "$1"

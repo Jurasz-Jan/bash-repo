@@ -1,0 +1,20 @@
+#!/bin/bash
+#Autor: Jan Jurasz
+
+# Sprawdzenie, czy podano nazwę pliku jako argument
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 logfile.log"
+    exit 1
+fi
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$1" ]; then
+    echo "Plik $1 nie istnieje."
+    exit 1
+fi
+
+# Wyodrębnienie adresów IP i zliczenie żądań GET/POST
+awk '
+    $6 ~ /"(GET|POST)/ { ip_count[$1]++ } 
+    END { for (ip in ip_count) print ip, ip_count[ip] }
+' "$1" | sort -k2,2nr -k1 | head -n 10

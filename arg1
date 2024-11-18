@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Initialize variables
+declare -A options
+input=""
+output=""
+declare -a unsupported_options
+declare -a processed_options  # Array to track processed options
+
+# Process options
+while getopts ":i:o:cbfghkqlmnrstuvxze" opt; do
+    case $opt in
+        i)
+            processed_options+=("-i")  # Track the -i option
+            if [[ -n $OPTARG && $OPTARG != -* ]]; then
+                input=$OPTARG
+                options["-i"]="present and set to \"$input\""
+            else
+                echo "-i -o options require a filename"
+                exit 1  # Exit immediately if filename is missing
+            fi
+            ;;
+        o)
+             processed_options+=("-o")  # Track the -o option
+            if [[ -n $OPTARG && $OPTARG != -* ]]; then
+                output=$OPTARG
+                options["-o"]="present and set to \"$output\""
+            else
+                echo "-i -o options require a filename"
+                exit 1  # Exit immediately if filename is missing
+            fi
+            ;;
+        
+        
+        q)
+            echo "Unsupported option: -$opt"
+            exit 1
+            ;;
+
+        c|b|f|g|h|k|l|m|r|s|t|u|v|x|z|n|e)
+            options["-$opt"]="present"
+            ;;
+        ?)
+            unsupported_options+=("-$OPTARG")
+            ;;
+    esac
+done
+
+# Shift off the processed options
+shift $((OPTIND - 1))
+
+# Sort options alphabetically, including unsupported options
+sorted_options=($(for key in "${!options[@]}" "${unsupported_options[@]}"; do echo "$key"; done | sort))
+
+# Display sorted options
+if [[ ${#sorted_options[@]} -gt 0 ]]; then
+    previous_option=""
+    for opt in "${sorted_options[@]}"; do
+        if [[ "$opt" == "$previous_option" ]]; then
+            continue  # Skip this option if it's the same as the previous one
+        fi
+        
+        # Display the option with its corresponding message
+        echo "$opt ${options[$opt]:-present}"
+        
+        # Update the previous_option to the current option
+        previous_option="$opt"
+    done
+fi
+
+# Check remaining arguments
+if [[ $# -gt 0 ]]; then
+    echo "Arguments are:"
+    count=1  
+    for arg in "$@"; do
+        echo "\$$count=$arg"
+        ((count++))  
+    done
+fi

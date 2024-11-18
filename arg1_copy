@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Inicjalizacja zmiennych
+declare -A options
+input=""
+output=""
+declare -a unsupported_options
+
+# Procesowanie opcji
+while getopts ":i:o:" opt; do
+    # echo "Przetwarzanie opcji: -$opt"  # Debugging 
+    # echo "OPTARG: $OPTARG"  # Debugging 
+
+    case $opt in
+        i)
+            # echo "Test -i"
+            if [[ -n $OPTARG ]]; then
+                input=$OPTARG
+                options["-i"]="present and set to \"$input\""
+                echo "Input set to: $input"  # Debugging output
+            else
+                echo "-i option requires a filename"
+                exit 1
+            fi
+            ;;
+        o)
+            # echo "Test -o"
+            if [[ -n $OPTARG ]]; then
+                output=$OPTARG
+                options["-o"]="present and set to \"$output\""
+                # echo "Output set to: $output"  # Debugging output
+            else
+                echo "-o option requires a filename"
+                exit 1
+            fi
+            ;;
+        
+        q)
+            echo "Unsupported option: -$opt"
+            exit 1
+            ;;
+        *)
+            
+            unsupported_options+=("-$OPTARG")  # Dodaj do tablicy nieobsługiwane opcje
+            ;;
+    esac
+done
+
+
+shift $((OPTIND - 1))
+
+sorted_options=($(printf "%s\n" "${unsupported_options[@]}" | sort))
+
+
+if [[ ${#sorted_options[@]} -gt 0 ]]; then
+    for opt in "${sorted_options[@]}"; do
+        echo "$opt present"
+    done
+fi
+
+# Sprawdzanie wyników
+for opt in "${!options[@]}"; do
+    echo "$opt ${options[$opt]}"
+done
+
+# Sprawdzanie pozostałych argumentów
+if [[ $# -gt 0 ]]; then
+    echo "Additional arguments are:"
+    for arg in "$@"; do
+        echo "$arg"
+    done
+fi

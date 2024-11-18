@@ -1,0 +1,130 @@
+#!/bin/bash
+
+# Function to display help
+function show_help() {
+    echo "Usage: $0 [options] [arg1 arg2 ... argN]"
+    echo ""
+    echo "Options:"
+    echo "  -a to -z          Accept any lowercase single-letter options"
+    echo "  -i <input>        Specify input file"
+    echo "  -o <output>       Specify output file"
+    echo "  -q                Unsupported option that will cause an error"
+    echo "  --help            Display this help message and exit"
+    exit 0
+}
+
+# Initialize variables
+declare -A options
+input=""
+output=""
+declare -a unsupported_options
+declare -a processed_options  # Array to track processed options
+
+# Parse options using getopt
+PARSED_OPTIONS=$(getopt -o "i:o:abcdefghjklmnpqrstuvwxyz" --long "help" -- "$@")
+
+# Check if parsing was successful
+if [[ $? -ne 0 ]]; then
+    echo "Failed to parse options."
+    exit 1
+fi
+
+# Evaluate parsed options
+eval set -- "$PARSED_OPTIONS"
+
+# Process each option
+while true; do
+    case "$1" in
+        --help)
+            show_help  # Show help and exit if --help is present
+            ;;
+        -i)
+            processed_options+=("-i")
+            shift
+            if [[ -n $1 ]]; then
+                input="$1"
+                options["-i"]="present and set to \"$input\""
+                echo "Input set to: $input"  # Debugging output
+                shift
+            else
+                echo "-i option requires a filename"
+                exit 1
+            fi
+            ;;
+        -o)
+            processed_options+=("-o")
+            shift
+            if [[ -n $1 ]]; then
+                output="$1"
+                options["-o"]="present and set to \"$output\""
+                shift
+            else
+                echo "-o option requires a filename"
+                exit 1
+            fi
+            ;;
+        -q)
+            echo "Unsupported option: -q"
+            exit 1
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -a|-b|-c|-d|-e|-f|-g|-h|-j|-k|-l|-m|-n|-p|-r|-s|-t|-u|-v|-w|-x|-y|-z)
+            # Handle all valid lowercase options
+            unsupported_options+=("$1")  # Add to unsupported options
+            shift
+            ;;
+        *)
+            # Catch any unexpected or invalid options
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Check if -i is the last option
+if [[ ${#processed_options[@]} -gt 0 && "${processed_options[-1]}" == "-i" ]]; then
+    echo "Error: -i option cannot be the last option."
+    exit 1
+fi
+
+# Sort options alphabetically, including unsupported options
+sorted_options=($(for key in "${!options[@]}" "${unsupported_options[@]}"; do echo "$key"; done | sort))
+
+# Display sorted options
+if [[ ${#sorted_options[@]} -gt 0 ]]; then
+    previous_option=""
+    for opt in "${sorted_options[@]}"; do
+        if [[ "$opt" == "$previous_option" ]]; then
+            continue  # Skip this option if it's the same as the previous one
+        fi
+        
+        if [[ "$opt" == "-q" ]]; then
+            echo "Unsupported option: -q"
+            exit 1
+        fi
+
+        # If the option is supported, display it with the corresponding message
+        if [[ -n "${options[$opt]}" ]]; then
+            echo "$opt ${options[$opt]}"
+        else
+            # If it's an unsupported option, just display that it is present
+            echo "$opt present"
+        fi
+
+        # Update the previous option to the current one
+        previous_option="$opt"
+    done
+fi
+
+# Check remaining arguments
+if [[ $# -gt 0 ]]; then
+    echo "Arguments are:"
+    count=1
+    for arg in "$@"; do
+        echo "\$$count=$arg"
+        ((count++))
+    done
+fi

@@ -1,0 +1,43 @@
+#!/bin/bash
+#Autor: Jan Jurasz
+
+# Sprawdzenie, czy podano nazwę pliku jako argument
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 logfile.log"
+    exit 1
+fi
+
+logfile="$1"
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$logfile" ]; then
+    echo "Plik $logfile nie istnieje."
+    exit 1
+fi
+
+# Przetwarzanie logów
+awk '
+    {
+        # Wyciągnięcie IP i strony (pole $1 i $7)
+        ip = $1
+        page = $7
+
+        # Tworzenie klucza IP+strona i zliczanie unikalnych żądań
+        unique_requests[ip][page] = 1
+    }
+    END {
+        # Przetwarzanie unikalnych żądań
+        for (ip in unique_requests) {
+            unique_count = 0
+            for (page in unique_requests[ip]) {
+                unique_count++
+            }
+            results[ip] = unique_count
+        }
+
+        # Wyświetlenie wyników
+        for (ip in results) {
+            print ip, results[ip]
+        }
+    }
+' "$logfile" | sort -k2,2nr -k1 | head -n 10

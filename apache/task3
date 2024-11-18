@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Sprawdzenie, czy podano nazwę pliku jako argument
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 logfile.log"
+    exit 1
+fi
+
+# Sprawdzenie, czy plik istnieje
+if [ ! -f "$1" ]; then
+    echo "Plik $1 nie istnieje."
+    exit 1
+fi
+
+# Wyodrębnienie stron i zliczenie liczby żądań
+awk '
+    $6 ~ /"(GET|POST)/ { 
+        # Usuwamy cudzysłowy wokół metody żądania i wyciągamy stronę (pole $7)
+        page_count[$7]++ 
+    } 
+    END { 
+        for (page in page_count) 
+            print page, page_count[page] 
+    }
+' "$1" | sort -k2,2nr -k1 | head -n 10

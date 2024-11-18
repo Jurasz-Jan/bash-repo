@@ -1,0 +1,17 @@
+#!/bin/bash
+#Autor: Jan Jurasz
+
+# Sprawdzenie, czy podano nazwę pliku jako argument
+if [ $# -ne 1 ]; then
+    echo "Użycie: $0 logfile.log"
+    exit 1
+fi
+
+# Liczenie liczby linii w pliku (każda linia to jedno żądanie)
+if [ -f "$1" ]; then
+    total_requests=$(wc -l < "$1")
+    echo $total_requests
+else
+    echo "Plik $1 nie istnieje."
+    exit 1
+fi
